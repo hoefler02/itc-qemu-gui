@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="images">
+    <file>qemu.png</file>
+    <file>gear.png</file>
+  </qresource>
+</RCC>
