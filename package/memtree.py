@@ -5,6 +5,7 @@ from PySide2.QtCore import QSemaphore, QSize
 from PySide2.QtGui import QFont
 
 class MemTree(QWidget):
+
 	def __init__(self, qmp):
 		super().__init__()
 		self.qmp = qmp
@@ -17,7 +18,10 @@ class MemTree(QWidget):
 		self.get_map()
 
 	def init_ui(self):
+
 		self.vbox = QVBoxLayout()
+
+		se
 
 		self.refresh = QPushButton('Refresh')
 		self.refresh.clicked.connect(lambda:self.get_map())

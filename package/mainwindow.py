@@ -8,11 +8,14 @@ from package.memdumpwindow import MemDumpWindow
 from package.registerview import RegisterView
 from package.errorwindow import ErrorWindow
 from package.qmpwrapper import QMP
+from package.preferences import Preferences
 from package.memtree import MemTree
 
 class MainWindow(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, app):
+
+        self.app = app
  
         self.qmp = QMP('localhost', 55555)
         self.qmp.start()
@@ -62,7 +65,7 @@ class MainWindow(QMainWindow):
         file_.addAction(exit_)
 
         # Edit Menu Options
-        prefs = QAction("Preferences", self)
+        prefs = QAction("Preferences", self, triggered=lambda:self.open_new_window(Preferences(self.app)))
         edit.addAction(prefs)
 
         # Run Menu Options

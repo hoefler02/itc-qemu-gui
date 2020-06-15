@@ -3,5 +3,5 @@ from package.mainwindow import MainWindow
 
 def run():
     app = QApplication()
-    window = MainWindow()
+    window = MainWindow(app)
     app.exec_()
