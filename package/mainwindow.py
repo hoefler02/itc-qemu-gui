@@ -1,6 +1,7 @@
-from PySide2.QtWidgets import QMainWindow, QAction, QGridLayout, QPushButton, QWidget, QErrorMessage, QMessageBox
+
+from PySide2.QtWidgets import QMainWindow, QAction, QGridLayout, QPushButton, QWidget, QErrorMessage, QMessageBox, QLabel
 from PySide2.QtCore import QSize, Slot
-from PySide2.QtGui import QIcon 
+from PySide2.QtGui import QIcon, QFont
 from PySide2.QtCore import QSize, Slot
 from PySide2.QtGui import QIcon 
 
@@ -10,6 +11,10 @@ from package.errorwindow import ErrorWindow
 from package.qmpwrapper import QMP
 from package.preferences import Preferences
 from package.memtree import MemTree
+
+from datetime import datetime
+import threading
+import time
 
 class MainWindow(QMainWindow):
 
@@ -25,7 +30,11 @@ class MainWindow(QMainWindow):
 
         super().__init__()
         self.init_ui()
-        
+
+        self.qmp.timeUpdate.connect(self.update_time)
+        self.t = TimeThread(self.qmp)
+        self.t.start()
+
         self.window = {}
 
     def init_ui(self):
@@ -123,6 +132,10 @@ class MainWindow(QMainWindow):
         play_button.clicked.connect(lambda: (self.pause_button.setChecked(False), self.qmp.command('cont')))
         play_button.setFixedSize(QSize(50, 50))
         grid.addWidget(play_button, 0, 1) # row, column
+        
+        self.time = QLabel()
+        self.time.setFont(QFont('Courier New'))
+        grid.addWidget(self.time, 0, 2)
 
         center = QWidget()
         center.setLayout(grid)
@@ -149,3 +162,19 @@ class MainWindow(QMainWindow):
 
     def open_new_window(self, new_window):
         self.window[type(new_window).__name__] = new_window # this way the old instance get fully reaped
+
+    def update_time(self, time):
+        date = datetime.fromtimestamp(time / 1000000000)
+        self.time.setText(f'Time: {date.day - 1:02}:{date.hour:02}:{date.minute:02}:{date.second:02}') # -1 for day because it starts from 1
+
+class TimeThread(threading.Thread):
+    def __init__(self, qmp):
+        super().__init__()
+        self.daemon = True
+        self.qmp = qmp
+
+    def run(self):
+        while True:
+            time.sleep(.5)
+            args = {'clock': 'virtual'}
+            self.qmp.command('itc-sim-time', args=args)

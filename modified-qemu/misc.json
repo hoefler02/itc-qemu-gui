@@ -1776,8 +1776,34 @@
 ##
 # @mtree:
 # 
-# Get strings of the regions of memory
+# Get address ranges of the subregions of memory of region 'name' 
 #
 # Since: 4.2
 ##
 { 'command': 'mtree', 'data': {'*name': 'str' }, 'returns': 'MTreeReturn' }
+
+##
+# @ClockType:
+#
+# QEMU clock type enumeration (see include/qemu/timer.h).
+##
+{ 'enum': 'ClockType',
+'data': [ 'realtime', 'virtual', 'host', 'virtual-rt' ] }
+
+##
+# @SimTime:
+#
+# @time_ns: Sim time (ns).
+#
+##
+{ 'struct': 'SimTime', 'data': { 'time_ns': 'int64' } }
+
+##
+# @itc-sim-time:
+#
+# Get current simulation time.
+#
+##
+{ 'command': 'itc-sim-time',
+'data': { 'clock': 'ClockType' },
+'returns': 'SimTime' }
