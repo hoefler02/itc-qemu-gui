@@ -1,4 +1,4 @@
-from PySide2.QtWidgets import QMainWindow, QWidget, QLabel, QGridLayout, QShortcut, QLineEdit, QAction
+from PySide2.QtWidgets import QMainWindow, QWidget, QLabel, QGridLayout, QShortcut, QLineEdit, QAction, QFileDialog
 from PySide2.QtGui import QKeySequence, QFont
 from PySide2.QtCore import Qt, QTimer
 import re
@@ -16,6 +16,7 @@ class RegisterView(QMainWindow):
         # self.timer.start(100)
 
         self.fancy = True
+        self.registers = None
 
         self.init_ui()
         self.menu_bar()
@@ -41,6 +42,7 @@ class RegisterView(QMainWindow):
     def fancy_view(self):
 
         data = self.qmp.hmp_command('info registers')
+        self.registers = data
 
         d = {}
         for e in filter(None, re.split('=| |\r\n', data['return'])): # string to dictionary
@@ -68,6 +70,7 @@ class RegisterView(QMainWindow):
         self.grid.setSpacing(15)
 
         data = self.qmp.hmp_command('info registers')
+        self.registers = data
 
         lab = QLabel(data['return'], self)
         lab.setFont(QFont('Monospace', 12))
@@ -79,15 +82,28 @@ class RegisterView(QMainWindow):
         self.fancy = not self.fancy
 
         self.init_ui()
+    
+    def export_registers(self):
+
+        name = QFileDialog.getSaveFileName(self, 'Save File', '', 'Text files (*.txt)')
+
+        register_file = open(name[0], 'w')
+        register_file.write(self.registers['return'])
+        register_file.close()
+        
 
     def menu_bar(self):
 
         bar = self.menuBar()
 
+        file_menu = bar.addMenu('File')
         options = bar.addMenu('Options')
 
         toggle_refresh = QAction('Auto Refresh', self, checkable=True, triggered=lambda: self.timer.start(100) if toggle_refresh.isChecked() else self.timer.stop())
         toggle_ugly = QAction('Text View', self, checkable=True, triggered=lambda:self.switch_view())
+        save_to_file = QAction('Save to File', self, triggered=self.export_registers)
 
         options.addAction(toggle_refresh)
         options.addAction(toggle_ugly)
+
+        file_menu.addAction(save_to_file)
