@@ -4,11 +4,13 @@ from PySide2.QtCore import Qt
 
 class Preferences(QWidget):
 
-    def __init__(self, app):
+    def __init__(self, app, default):
 
         QWidget.__init__(self)
 
         self.app = app
+
+        self.default = default
 
         self.init_ui()
         self.show()
@@ -18,11 +20,13 @@ class Preferences(QWidget):
         self.setWindowTitle('Preferences')
         self.setGeometry(100, 100, 200, 60)
 
-        self.default = QGuiApplication.palette()
 
         self.darkmode = QCheckBox('Dark Mode', self)
 
         self.app.setStyle("Fusion")
+
+        if QGuiApplication.palette() != self.default:
+            self.darkmode.setChecked(True)
 
         palette = QPalette()
         palette.setColor(QPalette.Window, QColor(25, 25, 25)) # 53 53 53

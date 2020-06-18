@@ -1,7 +1,7 @@
 
 from PySide2.QtWidgets import QMainWindow, QAction, QGridLayout, QPushButton, QWidget, QErrorMessage, QMessageBox, QLabel
-from PySide2.QtCore import QSize, Slot
-from PySide2.QtGui import QIcon, QFont
+from PySide2.QtCore import QSize, Slot, Qt
+from PySide2.QtGui import QIcon, QFont, QGuiApplication
 from PySide2.QtCore import QSize, Slot
 from PySide2.QtGui import QIcon 
 
@@ -37,14 +37,16 @@ class MainWindow(QMainWindow):
 
         self.window = {}
 
+        self.default_theme = QGuiApplication.palette()
+
     def init_ui(self):
 
         # Window Setup
         self.setWindowTitle("QEMU Control")
-        self.setGeometry(100, 100, 400, 300) # x, y, w, h 
+        self.setGeometry(100, 100, 250, 100) # x, y, w, h 
 
         # App Icon
-        icon = QIcon('package/icons/nasa.png')
+        icon = QIcon('package/icons/qemu-official.png')
         self.setWindowIcon(icon)
 
         # User Interface
@@ -74,7 +76,7 @@ class MainWindow(QMainWindow):
         file_.addAction(exit_)
 
         # Edit Menu Options
-        prefs = QAction("Preferences", self, triggered=lambda:self.open_new_window(Preferences(self.app)))
+        prefs = QAction("Preferences", self, triggered=lambda:self.open_new_window(Preferences(self.app, self.default_theme)))
         edit.addAction(prefs)
 
         # Run Menu Options
@@ -115,27 +117,46 @@ class MainWindow(QMainWindow):
         grid = QGridLayout()
         grid.setSpacing(15)
 
-        self.pause_button = QPushButton(self)
-        self.pause_button.setIcon(QIcon('package/icons/icons8-pause-90.png'))
-        self.pause_button.clicked.connect(lambda: self.qmp.command('cont') if not self.pause_button.isChecked() else self.qmp.command('stop'))
-        self.pause_button.setFixedSize(QSize(50, 50))
-        grid.addWidget(self.pause_button, 0, 0) # row, column
-        self.pause_button.setCheckable(True)
-
         # Check if QMP is running initially
         if self.qmp.running == 'paused':
             self.paused = True
-            self.pause_button.setChecked(self.paused)
+            # self.pause_button.setChecked(self.paused)
 
-        play_button = QPushButton(self)
-        play_button.setIcon(QIcon('package/icons/icons8-play-90.png'))
-        play_button.clicked.connect(lambda: (self.pause_button.setChecked(False), self.qmp.command('cont')))
-        play_button.setFixedSize(QSize(50, 50))
-        grid.addWidget(play_button, 0, 1) # row, column
+        self.pause_button = QPushButton(self)
+        self.running_state = QLabel(self)
+
+        def cont_sim():
+            # self.pause_button.setIcon(QIcon('package/icons/icons8-pause-90.png'))
+            self.pause_button.setText('■')
+            self.running_state.setText('Current State: <font color="green">Running</font>')
+            self.qmp.command('cont')
         
+        def stop_sim():
+            # self.pause_button.setIcon(QIcon('package/icons/icon8-play-90.png'))
+            self.pause_button.setText('▶')
+            self.running_state.setText('Current State: <font color="red">Paused</font>')
+            self.qmp.command('stop')
+
+        self.pause_button.clicked.connect(lambda: stop_sim() if not self.paused else cont_sim())
+        self.pause_button.setFixedSize(QSize(60, 60))
+        grid.addWidget(self.pause_button, 0, 0, alignment=Qt.AlignCenter) # row, column
+        # self.pause_button.setCheckable(True)
+
+        grid.addWidget(self.running_state, 2, 0)
+
+        banner = QLabel('QEMU Version ' + str(self.qmp.banner['QMP']['version']['package']))
+        # print(self.qmp.banner)
+        grid.addWidget(banner, 3, 0)
+
+        # play_button = QPushButton(self)
+        # play_button.setIcon(QIcon('package/icons/icons8-play-90.png'))
+        # play_button.clicked.connect(lambda: (self.pause_button.setChecked(False), self.qmp.command('cont')))
+        # play_button.setFixedSize(QSize(50, 50))
+        # grid.addWidget(play_button, 0, 1) # row, column
+
         self.time = QLabel()
         self.time.setFont(QFont('Courier New'))
-        grid.addWidget(self.time, 0, 2)
+        grid.addWidget(self.time, 1, 0)
 
         center = QWidget()
         center.setLayout(grid)
@@ -153,12 +174,18 @@ class MainWindow(QMainWindow):
         # print('revieced: ', value)
         if value == 'running':
             self.paused = False
+            # self.pause_button.setIcon(QIcon('package/icons/icons8-pause-90.png'))
+            self.pause_button.setText('■')
+            self.running_state.setText('Current State: <font color="green">Running</font>')
         elif value == 'paused':
             self.paused = True 
+            # self.pause_button.setIcon(QIcon('package/icons/icons8-play-90.png'))
+            self.pause_button.setText('▶')
+            self.running_state.setText('Current State: <font color="red">Paused</font>')
         else:
+            self.running_state.setText('Current State: Broken')
             self.throwError()
-
-        self.pause_button.setChecked(self.paused)
+    
 
     def open_new_window(self, new_window):
         self.window[type(new_window).__name__] = new_window # this way the old instance get fully reaped

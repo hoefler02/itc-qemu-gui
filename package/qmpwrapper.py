@@ -10,6 +10,7 @@ class QMP(threading.Thread, QtCore.QObject):
     emptyReturn = QtCore.Signal(bool)
     memoryMap = QtCore.Signal(list)
     timeUpdate = QtCore.Signal(tuple)
+
     def __init__(self, host, port):
 
         QtCore.QObject.__init__(self)
@@ -22,16 +23,18 @@ class QMP(threading.Thread, QtCore.QObject):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
 
+        self.banner = json.loads(self.sock.recv(256))
+
         self.responses = []
 
         # QMP setup
         self.command('qmp_capabilities')
-        self.listen() # pluck empty return object
+        # self.listen() # pluck empty return object
         self.command('query-status')
         self._running = None
         self._empty_return = None
         self._time = None
-        
+
     def run(self):
         while True:
             data = self.listen()
