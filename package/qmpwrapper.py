@@ -73,7 +73,8 @@ class QMP(threading.Thread, QtCore.QObject):
 
         data = total_data.decode().split('\n')[0]
         data = json.loads(data)
-        self.responses.append(data)
+        if 'return' in data.keys() and 'time_ns' not in data['return']:
+            self.responses.append(data)
         return data
 
 
@@ -86,7 +87,7 @@ class QMP(threading.Thread, QtCore.QObject):
     def hmp_command(self, cmd):
         hmpcmd = json.dumps({'execute': 'human-monitor-command', 'arguments': {'command-line': cmd}})
         self.sock.sendall(hmpcmd.encode())
-        time.sleep(0.1) # wait for listen to capture data and place it in responses dictionary
+        time.sleep(0.05) # wait for listen to capture data and place it in responses dictionary
         return self.responses[-1]
     
     @property

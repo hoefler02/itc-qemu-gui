@@ -1,16 +1,13 @@
-
-from PySide2.QtWidgets import QMainWindow, QAction, QGridLayout, QPushButton, QWidget, QErrorMessage, QMessageBox, QLabel
+from PySide2.QtWidgets import QMainWindow, QAction, QGridLayout, QPushButton, QWidget, QErrorMessage, QMessageBox, QLabel, QHBoxLayout, QVBoxLayout
+from PySide2.QtGui import QIcon, QFont, QGuiApplication, QPixmap
 from PySide2.QtCore import QSize, Slot, Qt
-from PySide2.QtGui import QIcon, QFont, QGuiApplication
-from PySide2.QtCore import QSize, Slot
-from PySide2.QtGui import QIcon 
 
 from package.memdumpwindow import MemDumpWindow
 from package.registerview import RegisterView
 from package.errorwindow import ErrorWindow
-from package.qmpwrapper import QMP
 from package.preferences import Preferences
 from package.memtree import MemTree
+from package.qmpwrapper import QMP
 
 from datetime import datetime
 import threading
@@ -43,7 +40,8 @@ class MainWindow(QMainWindow):
 
         # Window Setup
         self.setWindowTitle("QEMU Control")
-        self.setGeometry(100, 100, 250, 100) # x, y, w, h 
+        self.setGeometry(100, 100, 250, 200) # x, y, w, h 
+        self.setFixedSize(self.size())
 
         # App Icon
         icon = QIcon('package/icons/qemu-official.png')
@@ -113,9 +111,10 @@ class MainWindow(QMainWindow):
         help_.addAction(usage)
 
     def grid_layout(self):
-        
-        grid = QGridLayout()
+
+        grid = QVBoxLayout()
         grid.setSpacing(15)
+
 
         # Check if QMP is running initially
         if self.qmp.running == 'paused':
@@ -130,23 +129,38 @@ class MainWindow(QMainWindow):
             self.pause_button.setText('■')
             self.running_state.setText('Current State: <font color="green">Running</font>')
             self.qmp.command('cont')
-        
+
         def stop_sim():
             # self.pause_button.setIcon(QIcon('package/icons/icon8-play-90.png'))
             self.pause_button.setText('▶')
             self.running_state.setText('Current State: <font color="red">Paused</font>')
             self.qmp.command('stop')
 
+        subgrid = QHBoxLayout()
+
         self.pause_button.clicked.connect(lambda: stop_sim() if not self.paused else cont_sim())
-        self.pause_button.setFixedSize(QSize(60, 60))
-        grid.addWidget(self.pause_button, 0, 0, alignment=Qt.AlignCenter) # row, column
+        self.pause_button.setFixedSize(QSize(50, 50))
+        subgrid.addWidget(self.pause_button, 0)
         # self.pause_button.setCheckable(True)
 
-        grid.addWidget(self.running_state, 2, 0)
+
+        meatball = QLabel(self)
+        logo = QPixmap('package/icons/nasa.png')
+        logo = logo.scaled(75, 75, Qt.KeepAspectRatio)
+        meatball.setPixmap(logo)
+        subgrid.addWidget(meatball, 1)
+
+        grid.addLayout(subgrid, 0)
+
+        self.time = QLabel()
+        self.time.setFont(QFont('Courier New'))
+        grid.addWidget(self.time, 1)
+
+        grid.addWidget(self.running_state, 2)
 
         banner = QLabel('QEMU Version ' + str(self.qmp.banner['QMP']['version']['package']))
         # print(self.qmp.banner)
-        grid.addWidget(banner, 3, 0)
+        grid.addWidget(banner, 3)
 
         # play_button = QPushButton(self)
         # play_button.setIcon(QIcon('package/icons/icons8-play-90.png'))
@@ -154,14 +168,10 @@ class MainWindow(QMainWindow):
         # play_button.setFixedSize(QSize(50, 50))
         # grid.addWidget(play_button, 0, 1) # row, column
 
-        self.time = QLabel()
-        self.time.setFont(QFont('Courier New'))
-        grid.addWidget(self.time, 1, 0)
-
         center = QWidget()
         center.setLayout(grid)
         self.setCentralWidget(center)
-    
+
     def throwError(self):
         msgBox = QMessageBox(self)
         msgBox.setText('Lost Connection to QMP!')
