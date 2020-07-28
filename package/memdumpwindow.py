@@ -197,13 +197,10 @@ class MemDumpWindow(QWidget):
 
 
     def closeEvent(self, event):
-        print('close')
         self.kill_signal.emit(True)
         self.qmp.pmem.disconnect(self.update_text)
         while True:
-            print('looping')
             if self.sem.tryAcquire(1, 1):
-                print('closing')
                 break
             self.sem.release(10)
         event.accept()
@@ -533,7 +530,7 @@ class MyThread(QThread):
         self.running = True
     def run(self):
         while True:
-            if self.sem.tryAcquire(1, 100): # try to acquire and wait 1s to try to acquire
+            if self.sem.tryAcquire(1, 1000): # try to acquire and wait 1s to try to acquire
                 break
             if self.running:
                 self.timing_signal.emit(True)
